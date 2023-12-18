@@ -1,6 +1,9 @@
 const express = require('express');
+const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config()
+
+const appointmentRoutes = require('./routes/appointmentRoutes');
 
 const mongoose = require('mongoose')
 
@@ -17,9 +20,14 @@ const mongoose = require('mongoose')
 const app = express()
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
+app.use(cors())
 
 const PORT = process.env.SERVER_PORT || 9000
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
+
+
+// Appointment routes
+app.use('/appointments', appointmentRoutes);

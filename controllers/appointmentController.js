@@ -1,5 +1,3 @@
-
-
 const appointments = [
     {
         id : '1',

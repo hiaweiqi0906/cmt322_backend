@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const { DoNotHaveAccessError } = require('../helpers/exceptions');
+const getUserInfo = require('../helpers/getUserInfo');
 
 const requireAuth = (req, res, next) => {
     const { token } = req.cookies
@@ -15,7 +17,7 @@ const requireAuth = (req, res, next) => {
                 });
             }
             else {
-                res.locals.decodedToken = decodedToken;
+                res.locals.decodedToken = decodedToken
                 next()
             }
         })
@@ -31,4 +33,34 @@ const requireAuth = (req, res, next) => {
     }
 }
 
-module.exports = { requireAuth }
+const requireLawyerAndAdmin = (req, res, next) => {
+    const { type } = getUserInfo(res)
+    try {
+        if (type === "client") {
+            throw new DoNotHaveAccessError("User do not have access to perform such action")
+        }
+        next()
+    } catch (error) {
+        res.status(400).json({
+            error: error.name,
+            message: error.message
+        })
+    }
+}
+
+const requireAdmin = (req, res, next) => {
+    const { type } = getUserInfo(res)
+    try {
+        if (type !== "admin") {
+            throw new DoNotHaveAccessError("User do not have access to perform such action")
+        }
+        next()
+    } catch (error) {
+        res.status(400).json({
+            error: error.name,
+            message: error.message
+        })
+    }
+}
+
+module.exports = { requireAuth, requireLawyerAndAdmin, requireAdmin }

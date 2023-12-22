@@ -126,4 +126,11 @@ const adminGetAppointment = (req, res) => {
     res.json(appointments);
 }
 
+const readAppointments = (req, res) => {
+    // check type of user
+    // usre == admin => run adminGetAppointment
+    // else get respective appointment
+    res.json(appointments);
+}
+
 module.exports = {adminGetAppointment}

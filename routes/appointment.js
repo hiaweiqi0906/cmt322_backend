@@ -1,10 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const appointmentController = require('../controllers/appointmentController')
+const appointmentController = require('../controllers/appointmentController');
 
-router.get('/admin/:username', appointmentController.adminGetAppointment)
+// To get the appointments for displaying in website
+router.get('/', appointmentController.getAppointments);
 
-router.get('/userlist/:username', appointmentController.getUserList)
+// To check the user's role
+router.get('/isAdmin', appointmentController.checkUserRole);
+
+// To get other user's name list for options
+router.get('/userlist', appointmentController.getUserList);
+
+router.post('/', appointmentController.storeNewAppointment);
 
 
 module.exports = router;

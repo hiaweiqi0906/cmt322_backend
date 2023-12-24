@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 dotenv.config()
 
 const appointment = require('./routes/appointment');
-const document = require('./routes/document');
+//const document = require('./routes/document');
 const auth = require('./routes/auth');
 
 const mongoose = require('mongoose')
@@ -35,5 +35,5 @@ app.listen(PORT, () => {
 
 // Appointment routes
 app.use('/api/appointments', appointment);
-app.use('/api/documents', document);
+// app.use('/api/documents', document);
 app.use('/auth', auth);

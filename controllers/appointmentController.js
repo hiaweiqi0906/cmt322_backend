@@ -1,4 +1,4 @@
-const appointments = [
+const appointmentList = [
   {
     _id: '1',
     creator: 'Jie Yi',
@@ -17,12 +17,12 @@ const appointments = [
         response: 'declined'
       }
     ],
-    venue: 'USM',
-    dateStart: '2023-12-18',
-    dateEnd: '2023-12-18',
+    location: 'USM',
+    dateStart: '2023-12-25',
+    dateEnd: '2023-12-25',
     timeStart: '3:30 PM',
     timeEnd: '4 PM',
-    description: 'The appointment 1 is scheduled',
+    details: 'The appointment 1 is scheduled',
     status: 'scheduled'
   },
   {
@@ -39,12 +39,12 @@ const appointments = [
         response: 'pending'
       }
     ],
-    venue: 'UTM',
-    dateStart: '2023-12-17',
-    dateEnd: '2023-12-17',
+    location: 'UTM',
+    dateStart: '2023-12-24',
+    dateEnd: '2023-12-24',
     timeStart: '',
     timeEnd: '',
-    description: 'The appointment 2 is scheduled',
+    details: 'The appointment 2 is scheduled',
     status: 'scheduled'
   },
   {
@@ -57,12 +57,12 @@ const appointments = [
         response: 'pending'
       }
     ],
-    venue: 'UKM',
-    dateStart: '2023-12-22',
-    dateEnd: '2023-12-22',
+    location: 'UKM',
+    dateStart: '2023-12-29',
+    dateEnd: '2023-12-29',
     timeStart: '8 AM',
     timeEnd: '9 AM',
-    description: 'The appointment 3 is scheduled',
+    details: 'The appointment 3 is scheduled',
     status: 'cancelled'
   },
   {
@@ -75,12 +75,12 @@ const appointments = [
         response: 'pending'
       }
     ],
-    venue: 'UKM',
-    dateStart: '2023-12-15',
-    dateEnd: '2023-12-15',
+    location: 'UKM',
+    dateStart: '2023-12-22',
+    dateEnd: '2023-12-22',
     timeStart: '8 AM',
     timeEnd: '9 AM',
-    description: 'The appointment 4 is scheduled',
+    details: 'The appointment 4 is scheduled',
     status: 'scheduled'
   },
   {
@@ -93,12 +93,12 @@ const appointments = [
         response: 'pending'
       }
     ],
-    venue: 'UKM',
-    dateStart: '2023-12-22',
-    dateEnd: '2023-12-22',
+    location: 'UKM',
+    dateStart: '2023-12-29',
+    dateEnd: '2023-12-29',
     timeStart: '8 AM',
     timeEnd: '9 AM',
-    description: 'The appointment 5 is scheduled',
+    details: 'The appointment 5 is scheduled',
     status: 'scheduled'
   },
   {
@@ -111,32 +111,76 @@ const appointments = [
         response: 'accepted'
       }
     ],
-    venue: 'UKM',
-    dateStart: '2023-12-21',
-    dateEnd: '2023-12-21',
+    location: 'UKM',
+    dateStart: '2023-12-28',
+    dateEnd: '2023-12-28',
     timeStart: '8 AM',
     timeEnd: '9 AM',
-    description: 'The appointment 6 is scheduled',
+    details: 'The appointment 6 is scheduled',
     status: 'scheduled'
   },
 
 ]
 
-const attendee = ['Bulbasaur', 'Ivysaur', 'Venusaur', 'Charmander', 'Charmeleon', 'Pikachu']
+const attendee = ['Bulbasaur', 'Ivysaur', 'Venusaur', 'Charmander', 'Charmeleon', 'Pikachu', 'Raikou', 'Suikun', 'Entei']
 
+// Check the user is admin? return the response
+const checkUserRole = (req, res) => {
+  role = 'admin'
 
-// To return the all appointments including others for admin page
-const adminGetAppointment = (req, res) => {
-  res.json(appointments);
+  if(role == 'admin')
+    res.send(true)
+  else  
+    res.send(false)
 }
 
+// To send the appointments to the user
+const getAppointments = (req, res) => {
+  const username = 'Pikachu';
+  let isAdmin, appointments;
+
+  role = 'admin';
+  if(role == 'admin'){                // If is admin, then send all appointments
+    isAdmin = true;
+    appointments = appointmentList;
+  }
+  else{
+    isAdmin = false;                  // If is normal user, send his/her own appointments only
+    appointments = appointmentList.filter(appointment =>
+      (appointment.creator === username ||    // If the user is creator or attendee of an appointment
+      appointment.attendees.some(attendee => attendee.name === username)) &&
+      appointment.status === 'scheduled'      // If the appointment is scheduled (not cancelled)
+    );
+  }
+
+  res.json({
+    username: username,
+    isAdmin: isAdmin,
+    appointments: appointments
+  })
+}
+
+// To return the other user's name list
 const getUserList = (req, res) => {
+  const username = 'Pikachu';
+
   // To filter out the username, return the all possible attendee user list
-  const userList = attendee.filter(attendee => attendee !== req.params.username)  
+  const userList = attendee.filter(attendee => attendee !== username);
+
   res.json(userList);
 }
 
+const storeNewAppointment = (req, res) => {
+  const newAppointment = req.body;
+
+  console.log(newAppointment);
+
+  res.send('Success receive new appointment');
+}
+
 module.exports = 
-{ adminGetAppointment,
-  getUserList
+{ checkUserRole,
+  getAppointments,
+  getUserList,
+  storeNewAppointment
 }

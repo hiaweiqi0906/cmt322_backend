@@ -7,6 +7,7 @@ dotenv.config()
 const appointment = require('./routes/appointment');
 const document = require('./routes/document');
 const auth = require('./routes/auth');
+const crmRoute = require('./routes/crm');
 
 const mongoose = require('mongoose')
 

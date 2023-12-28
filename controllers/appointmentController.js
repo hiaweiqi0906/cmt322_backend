@@ -18,8 +18,8 @@ const appointmentList = [
       }
     ],
     location: 'USM',
-    dateStart: '2023-12-25',
-    dateEnd: '2023-12-25',
+    dateStart: '2024-1-1',
+    dateEnd: '2024-1-1',
     timeStart: '3:30 PM',
     timeEnd: '4:00 PM',
     details: 'The appointment 1 is scheduled',
@@ -32,16 +32,16 @@ const appointmentList = [
     attendees: [
       {
         name: 'Suikun',
-        response: 'pending'
+        response: 'accepted'
       },
       {
         name: 'Bulbasaur',
-        response: 'pending'
+        response: 'declined'
       }
     ],
     location: 'UTM',
-    dateStart: '2023-12-24',
-    dateEnd: '2023-12-24',
+    dateStart: '2023-12-28',
+    dateEnd: '2023-12-28',
     timeStart: '',
     timeEnd: '',
     details: 'The appointment 2 is scheduled',
@@ -76,8 +76,8 @@ const appointmentList = [
       }
     ],
     location: 'UKM',
-    dateStart: '2023-12-22',
-    dateEnd: '2023-12-22',
+    dateStart: '2023-12-29',
+    dateEnd: '2023-12-29',
     timeStart: '8:00 AM',
     timeEnd: '9:00 AM',
     details: 'The appointment 4 is scheduled',
@@ -112,8 +112,8 @@ const appointmentList = [
       }
     ],
     location: 'UKM',
-    dateStart: '2023-12-28',
-    dateEnd: '2023-12-28',
+    dateStart: '2024-1-4',
+    dateEnd: '2024-1-4',
     timeStart: '9:00 AM',
     timeEnd: '10:00 AM',
     details: 'The appointment 6 is scheduled',
@@ -186,7 +186,7 @@ const getUserList = (req, res) => {
 
 
 // To store the new appointment and return all related appointements
-const storeNewAppointment = (req, res) => {
+const createAppointment = (req, res) => {
   const newAppointment = req.body;    // Get the new appointment
   //const username = 'Pikachu';         // Get the username !!!
   let isAdmin, appointments;
@@ -205,7 +205,7 @@ const storeNewAppointment = (req, res) => {
     appointments = filterAppointments(appointmentList, username);   // Filter all the appointments !!!
   }
 
-  res.json({                          // Send the response with data
+  res.json({                          // Send the response with updated data
     username: username,
     isAdmin: isAdmin,
     appointments: appointments
@@ -213,9 +213,139 @@ const storeNewAppointment = (req, res) => {
 
 }
 
+
+// To return a specific appointment based on id
+const getSpecificAppointment = (req, res) => {
+  const id = req.params.id;
+
+  // Get the appointment object based on the id
+  appointment_target = appointmentList.find(appointment => appointment._id === id);
+
+  res.json(appointment_target);
+}
+
+
+// To update a particular appointment data in database
+const updateAppointment = (req, res) => {
+  const id = req.params.id;
+  const updatedAppointment = req.body;      // Get the updated appointment
+  let isAdmin, appointments;
+
+  // Update the created appointment in the database !!!
+  const index = appointmentList.findIndex(appointment => appointment._id === id);
+  if (index !== -1) {
+    // If the appointment with the given id is found
+    appointmentList[index] = updatedAppointment;
+
+    // console.log(appointmentList);
+
+    if(role == 'admin'){                // If is admin, then send all appointments
+      isAdmin = true;
+      appointments = appointmentList;   // Get all the appointments !!!
+    }
+    else{
+      isAdmin = false;                  // If is normal user, send his/her own appointments only
+      appointments = filterAppointments(appointmentList, username);   // Filter all the appointments !!!
+    }
+  
+    res.json({                          // Send the response with updated data
+      username: username,
+      isAdmin: isAdmin,
+      appointments: appointments
+    })
+
+  } else {
+    const errorResponse = {
+      error: true,
+      message: `Appointment with _id ${id} not found`,
+    };
+
+    res.status(404).json(errorResponse);
+  }
+}
+
+
+// To cancel the appointment
+const cancelAppointment = (req, res) => {
+  const id = req.params.id;
+
+  // Get the appointment object based on the id
+  appointment_target = appointmentList.find(appointment => appointment._id === id);
+
+  // Change the appointment status to cancelled
+  appointment_target.status = 'cancelled';
+  
+  //const username = 'Pikachu';         // Get the username !!!
+  let isAdmin, appointments;
+
+
+  if(role == 'admin'){                // If is admin, then send all appointments
+    isAdmin = true;
+    appointments = appointmentList;   // Get all the appointments !!!
+  }
+  else{
+    isAdmin = false;                  // If is normal user, send his/her own appointments only
+    appointments = filterAppointments(appointmentList, username);   // Filter all the appointments !!!
+  }
+
+  res.json({                          // Send the response with updated data
+    username: username,
+    isAdmin: isAdmin,
+    appointments: appointments
+  })
+}
+
+
+// To update the user response
+const updateUserResponse = (req, res) => {
+  const id = req.params.id;
+  const userResponse = req.body;      // Get the user response
+  //const username = 'Pikachu';       // Get the username !!!
+  let isAdmin, appointments;
+
+  // Get the appointment object based on the id
+  appointment_target = appointmentList.find(appointment => appointment._id === id);
+
+  if (!appointment_target) {
+    res.status(404).json({ error: 'Appointment not found' });
+    return;
+  }
+
+  // Find the specific attendee based on the username
+  const attendeeToUpdate = appointment_target.attendees.find(attendee => attendee.name === username);
+
+  if (attendeeToUpdate) {
+    // Update the response property for the found attendee
+    attendeeToUpdate.response = userResponse.response;
+
+    if(role == 'admin'){                // If is admin, then send all appointments
+      isAdmin = true;
+      appointments = appointmentList;   // Get all the appointments !!!
+    }
+    else{
+      isAdmin = false;                  // If is normal user, send his/her own appointments only
+      appointments = filterAppointments(appointmentList, username);   // Filter all the appointments !!!
+    }
+  
+    res.json({                          // Send the response with updated data
+      username: username,
+      isAdmin: isAdmin,
+      appointments: appointments
+    })
+  } else {
+    // If the attendee with the specified username is not found
+    res.status(404).json({ error: 'Attendee not found' });
+  }
+}
+
+
 module.exports = 
 { checkUserRole,
   getAppointments,
   getUserList,
-  storeNewAppointment
+  createAppointment,
+  getSpecificAppointment,
+  updateAppointment,
+  cancelAppointment,
+  updateUserResponse
 }

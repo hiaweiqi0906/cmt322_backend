@@ -3,15 +3,30 @@ const {Schema} = mongoose
 
 // Schema
 const userSchema = new Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true
+    },
     email: {
         type: String,
-        unique: true
+        unique: true,
+        required: true
     },
-    password: String
+    password: {
+        type: String,
+        required: true
+    },
+    avatar_url: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        required: true
+    },
 })
 
 // Model
-const UserModal = mongoose.model('User', userSchema);
+const UserModel = mongoose.model('User', userSchema);
 
-module.exports = UserModal  
+module.exports = UserModel  

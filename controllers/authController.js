@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
             jwt.sign({
                 email: user.email,
                 userId: user._id,
-                name: user.name,
+                name: user.username,
                 type: user.type
             }, process.env.JWT_SECRET, {}, (err, token) => {
                 if (err) throw err;

@@ -20,6 +20,10 @@ const caseSchema = new Schema({
                     type: String,
                     required: true,
                 },
+                case_member_role: {
+                    type: String,
+                    required: true,
+                },
             }],
         validate: {
             validator: validateArrayLength,

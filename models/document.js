@@ -17,7 +17,7 @@ const validateObjectId = (value) => {
 }
 
 const validateArrayLength = (value) => {
-    if (!Array.isArray(value) || value.length==0) {
+    if (!Array.isArray(value) || value.length == 0) {
         return false;
     }
     return true
@@ -39,6 +39,9 @@ const documentSchema = new Schema({
     doc_type: {
         type: String,
         required: true,
+    }, 
+    doc_avatar: {
+        type: String
     },
     filesize: {
         type: Number,
@@ -53,15 +56,18 @@ const documentSchema = new Schema({
             userId: {
                 type: String,
                 required: true
-            }, 
+            },
             type: {
                 type: String,
                 required: true
-            }, 
+            },
             action: {
                 type: String,
                 required: true
-            }, 
+            },
+            access_date_time :{
+                type: String
+            }
         }],
     },
     doc_title: {
@@ -82,7 +88,7 @@ const documentSchema = new Schema({
         validate: [{
             validator: validateObjectId,
             message: props => `Can_be_accessed_by is null or is not a valid Object ID`
-        },{
+        }, {
             validator: validateArrayLength,
             message: props => `Can_be_accessed_by cannot be empty array`
         }],
@@ -95,7 +101,7 @@ const documentSchema = new Schema({
         type: String,
         required: [true, "Doc_description is required"],
     },
-    doc_requested:{
+    doc_requested: {
         type: String
     }
 })

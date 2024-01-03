@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
             jwt.sign({
                 email: user.email,
                 userId: user._id,
-                name: user.name,
+                name: user.username,
                 type: user.type
             }, process.env.JWT_SECRET, {}, (err, token) => {
                 if (err) throw err;
@@ -60,7 +60,8 @@ const loginUser = async (req, res) => {
                     secure: process.env.NODE_ENV !== "development",
                     httpOnly: true,
                     maxAge: 2 * 60 * 60 * 1000,
-                }).json({ token })
+                })
+                .json({ token, type: user.type, name: user.username})
             })
         }
     } catch (error) {

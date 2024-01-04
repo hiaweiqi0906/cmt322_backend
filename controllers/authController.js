@@ -60,7 +60,8 @@ const loginUser = async (req, res) => {
                     secure: process.env.NODE_ENV !== "development",
                     httpOnly: true,
                     maxAge: 2 * 60 * 60 * 1000,
-                }).json({ token })
+                })
+                .json({ token, type: user.type, name: user.username})
             })
         }
     } catch (error) {

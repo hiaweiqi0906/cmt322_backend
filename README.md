@@ -1,11 +1,25 @@
-# How to start develop BE
+# CaseAce Backend
 
-1. Get the `.env` file from Whatsapp group
+This is backend of CaseAce, a management system for Law Firm. We built this using NodeJS and ExpressJS.
+
+# Get Started
+
+1. Install NodeJS in your machine
+2. Git pull or clone this repo
+3. Run `npm i` to install packages
+4. Get the `.env` and `config files`
+5. Run `npm start` to start the server
+
+## Notes when developing FE
+
+### How to start develop FE
+
+1. Get the `.env` file
 2. Create a file `/env` in this project folder
 3. Run `npm i` to install packages
 4. Run `npm start` to start server
 
-# Steps to develop a new feature
+### Steps to develop a new feature
 
 1. Checkout to main branch:`git checkout main`
 2. Checkout to new branch according to naming convention: `git chekcout -b  <branchname: username/featureName`, for example: `git checkout -b weiqi/login`

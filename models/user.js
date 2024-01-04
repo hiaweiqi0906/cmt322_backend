@@ -5,7 +5,7 @@ const {Schema} = mongoose
 const userSchema = new Schema({
     username: {
         type: String,
-        required: true
+        required: [true, "Username is required"],
     },
     last_name: {
         type: String,
@@ -16,19 +16,19 @@ const userSchema = new Schema({
     email: {
         type: String,
         unique: true,
-        required: true
+        required: [true, "Email is required"],
     },
     password: {
         type: String,
-        required: true
+        required: [true, "Password is required"],
     },
     avatar_url: {
         type: String,
-        required: true
+        required: [true, "Avatar_url is required"],
     },
     type: {
         type: String,
-        required: true
+        required: [true, "Type is required"],
     },
 })
 

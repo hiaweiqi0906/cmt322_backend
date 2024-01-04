@@ -49,6 +49,7 @@ app.use('/api/documents', document);
 app.use('/api/cases', cases);
 app.use('/api/statistics', statistic);
 app.use('/auth', auth);
+app.use('/api/crm', crmRoute);
 
 const io = require('socket.io')(server, {
   cors: {

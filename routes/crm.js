@@ -6,7 +6,7 @@ const {requireAuth} = require('../middlewares/authMiddleware')
 router.get('/', requireAuth, crmController.listUser) // get list of users
 router.get('/:id', requireAuth, crmController.listSelectedUser) // get only selected users
 router.post('/', requireAuth, crmController.createUser) // create new user
-router.put('/:id', requireAuth, crmController.updateUser) // edit selected user
+router.put('/:id', requireAuth, crmController.updateUser) // update user
 router.delete('/:id', requireAuth, crmController.deleteUser) // delete a user
 
 module.exports = router;

@@ -9,6 +9,7 @@ const appointment = require('./routes/appointment');
 const cases = require('./routes/case');
 const document = require('./routes/document');
 const auth = require('./routes/auth');
+const taskRoutes = require('./routes/task');
 
 const mongoose = require('mongoose');
 
@@ -26,7 +27,9 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost',
+  credentials: true}));
 
 const PORT = process.env.SERVER_PORT || 9000;
 
@@ -39,3 +42,4 @@ app.use('/api/appointments', appointment);
 app.use('/api/documents', document);
 app.use('/api/cases', cases);
 app.use('/auth', auth);
+app.use('/api/tasks', task);

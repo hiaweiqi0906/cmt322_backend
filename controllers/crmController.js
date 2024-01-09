@@ -30,6 +30,7 @@ const createUser = async (req, res) => {
         });
 
         const new_entered_user = await new_user.save();
+
         if (!new_entered_user) {
             return res.json({
                 error: 'No User uploaded'
@@ -56,10 +57,84 @@ const createUser = async (req, res) => {
 
 }
 
+const readUser = async (req, res) => {
+    const { userId, type } = getUserInfo(res)
+    const { id } = req.params
+    try {
+
+        // findandupdate
+        const requestedUser = await User.findByIdAndUpdate(new mongoose.Types.ObjectId(id),
+            {
+                "$push":
+                {
+                    "last_accessed_at": {
+                        "userId": userId,
+                        "type": type,
+                        "action": "view",
+                        "access_date_time": Date.parse(Date.now())
+                    }
+                }
+            }, { new: true }
+        )
+        if (!requestedUser)
+            throw new DataNotExistError("User not exist")
+
+        // update the doc
+
+        return res.status(200).send({ ...requestedUser.user, canEdit: type === "admin" })
+    } catch (error) {
+        if (error instanceof mongoose.Error.ValidationError) {
+            // Mongoose validation error
+            const validationErrors = {};
+
+            for (const field in error.errors)
+                validationErrors[field] = error.errors[field].message;
+
+            return res.status(400).json({
+                error: 'Validation failed',
+                validationErrors,
+            });
+        } else {
+            res.status(400).json({
+                error: error.name,
+                message: error.message
+            })
+        }
+    }
+}
+
 const listSelectedUser = async (req, res) => {
-    res.status(200).send({
-        message: "Selected User is here."
-    })}
+    let { id } = req.params
+    const { userId, type } = getUserInfo(res)
+    id = id === "self"?userId:id
+    try{
+        const selectedUser = await User.findById(new mongoose.Types.ObjectId(id));
+        if (!selectedUser)
+            throw new DataNotExistError("User does not exist")
+
+        return res.status(200).send(selectedUser)
+    }catch (error) {
+        if (error instanceof mongoose.Error.ValidationError) {
+            // Mongoose validation error
+            const validationErrors = {};
+
+            for (const field in error.errors)
+                validationErrors[field] = error.errors[field].message;
+
+            return res.status(400).json({
+                error: 'Validation failed',
+                validationErrors,
+            });
+        } else {
+            res.status(400).json({
+                error: error.name,
+                message: error.message
+            })
+        }
+    }
+}
+
+
 
 const listUser = async (req, res) => {
     try {
@@ -91,27 +166,32 @@ const listUser = async (req, res) => {
 }
 
 const updateUser = async (req, res) => {
+    let { id } = req.params
     const { userId, type } = getUserInfo(res)
-    const { id } = req.params
+    id = id === "self"?userId:id
 
     const selectUserID = type === "admin" ? id : userId;
 
     const {
         username,
         email,
+        
+        number,
+        address,
         password,
-        avatar_url,
-        role
+        avatar_url
+        
     } = req.body
 
     const update = {
         username,
         email,
+        type:req.body.type,
+        number,
+        address,
         password,
-        avatar_url,
-        type:role
+        avatar_url
     }
-
     try {
 
         const selectedUser = await User.findByIdAndUpdate(selectUserID,

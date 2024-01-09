@@ -7,24 +7,37 @@ const userSchema = new Schema({
         type: String,
         required: [true, "Username is required"],
     },
-    last_name: {
-        type: String,
-    },
-    first_name: {
-        type: String,
-    },
+
+    // related_case_history: {
+    //     type: [String],
+        
+    // },
+
     email: {
         type: String,
         unique: true,
         required: [true, "Email is required"],
     },
+
+    number: {
+        type: String,
+        unique: true,
+        required: [true, "Contact Number is required"],
+    },
+
+    address: {
+        type: String,
+        unique: true,
+        required: [true, "Address is required"],
+    },
+    
     password: {
         type: String,
         required: [true, "Password is required"],
     },
     avatar_url: {
         type: String,
-        required: [true, "Avatar_url is required"],
+        
     },
     type: {
         type: String,

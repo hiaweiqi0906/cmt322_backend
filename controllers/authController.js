@@ -6,13 +6,14 @@ const test = (req, res) => {
     res.json('tests is working')
 }
 
-const registerUser = (req, res) => {
+const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { email, password, username, number, address, type, avatar_url } = req.body;
+        const hashedPassword = await hashPassword(password)
         // check empty value
-        if (!name) {
+        if (!email) {
             return res.json({
-                err: 'Name is required!'
+                err: 'Email is required!'
             })
         }
 
@@ -22,18 +23,40 @@ const registerUser = (req, res) => {
             })
         }
 
-        if (!email) {
+        if (!username) {
             return res.json({
-                err: 'Email is required!'
+                err: 'username is required!'
             })
-        } else {
+        } 
+        if (!number) {
+            return res.json({
+                err: 'Number is required!'
+            })
+        }
+        if (!address) {
+            return res.json({
+                err: 'Address is required!'
+            })
+        }
+        if (!type) {
+            return res.json({
+                err: 'Type is required!'
+            })
+        } 
+
+        else {
             // find user if exist in db
             // create user record in db
+            const newUser = new User({
+                username, email, number, address, password:hashedPassword, avatar_url, type,
+            })
+            await newUser.save();
+            res.status(201).json({ message: 'User registered successfully' });
             // if err throw err to fe
             // else return status ok
         }
     } catch (error) {
-
+        res.status(400).json({ message: 'User registration failed' });
     }
 }
 

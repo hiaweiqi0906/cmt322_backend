@@ -17,19 +17,19 @@ const taskSchema = new mongoose.Schema({
         default: 'todo'
     },
     assignedBy: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'User',
     },
     assignedTo: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'User',
     },
     deadline: {
-        type: Date,
+        type: String,
     },
     taskAssignedDate: {
-        type: Date,
-        default: Date.now
+        type: String,
+        default: String.now
     },
     acceptanceCriteria: {
         type: String,

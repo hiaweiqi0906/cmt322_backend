@@ -42,4 +42,4 @@ app.use('/api/appointments', appointment);
 app.use('/api/documents', document);
 app.use('/api/cases', cases);
 app.use('/auth', auth);
-app.use('/api/tasks', task);
+app.use('/api/tasks', taskRoutes);

@@ -1,46 +1,25 @@
 const mongoose = require('mongoose');
-const Task = require('./models/Task'); // Import the Task model
-
-const checkTaskAccess = async (userId, type, taskId) => {
-    let tasks;
-    if (type === "admin")
-        tasks = await Task.findById(new mongoose.Types.ObjectId(taskId))
-    else
-        tasks = await Task.find(
-            {
-                "task_member_list.task_member_id": userId,
-                "task_member_list.task_member_type": type,
-                "_id": new mongoose.Types.ObjectId(taskId)
-            }
-        )
-
-    if (!tasks || tasks.length === 0)
-        throw new DataNotExistError("Task not exist")
-}
+const Task = require('../models/task'); // Import the Task model
 
 // 创建任务
 const createTask = async (req, res) => {
-    const { id, creator, title, lawyer, description, status, assignedBy, assignedTo, deadline, taskAssignedDate, acceptanceCriteria } = req.body;
-
-    const task = new Task({
-        _id: new mongoose.Types.ObjectId(id),
-        creator,
-        title,
-        lawyer,
-        description,
-        status,
-        assignedBy: assignedBy || creator, // 如果没有指定 assignedBy，则默认为 creator
-        assignedTo: assignedTo || lawyer, // 如果没有指定 assignedTo，则默认为 lawyer
-        deadline,
-        taskAssignedDate: taskAssignedDate || Date.now(), // 如果没有指定 taskAssignedDate，则默认为当前日期
-        acceptanceCriteria
-    });
-
     try {
+        const { title, description, status, assignedBy, assignedTo, deadline, acceptanceCriteria } = req.body;
+
+        const task = new Task({
+            title,
+            description,
+            status,
+            assignedBy,
+            assignedTo,
+            deadline,
+            taskAssignedDate: Date.now(),
+            acceptanceCriteria
+        });
         await task.save();
         res.status(200).json(task);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -99,12 +78,16 @@ const updateTask = async (req, res) => {
 // 删除任务
 const deleteTask = async (req, res) => {
     try {
-        const task = await Task.findByIdAndDelete(req.params.id);
-        if (!task) return res.status(404).json({ error: 'Task not found' });
+        const { id } = req.params;
+        const task = await Task.findByIdAndDelete(id);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
         res.status(200).json({ message: 'Task deleted' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-module.exports = { createTask, getTasks, getTask, updateTask, deleteTask };
+
+module.exports = { createTask, getTasks, getTask, updateTask, deleteTask, getTasksForLawyer };

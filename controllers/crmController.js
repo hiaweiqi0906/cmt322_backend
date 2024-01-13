@@ -1,6 +1,6 @@
 const fs = require('fs')
 const getUserInfo = require('../helpers/getUserInfo');
-const { DataNotExistError, UserNotSameError, DoNotHaveAccessError } = require('../helpers/exceptions');
+const { DataNotExistError, UserNotSameError, DoNotHaveAccessError, PasswordNotSameError } = require('../helpers/exceptions');
 const validator = require('validator');
 const User = require('../models/user');
 const mongoose = require('mongoose');
@@ -9,6 +9,8 @@ const Case = require('../models/case');
 const googleDrive = require('../utils/googleDrive'); // Import the new module
 const unlinkAsync = promisify(fs.unlink)
 const { userInfo } = require('os');
+const { cloudinary } = require('../config/cloudinary');
+const { hashPassword, comparePassword } = require('../helpers/auth')
 
 const createUser = async (req, res) => {
     // const {_id} = getUserInfo(res)
@@ -168,41 +170,112 @@ const listUser = async (req, res) => {
 const updateUser = async (req, res) => {
     let { id } = req.params
     const { userId, type } = getUserInfo(res)
-    id = id === "self"?userId:id
-
+    id = id === "self" ? userId : id
+    let user_avatar;
+    
     const selectUserID = type === "admin" ? id : userId;
+    if(req.file){
+        const cloudinaryUploadedImage = await cloudinary.uploader.upload(req.file.path);
+        user_avatar = cloudinaryUploadedImage.url;
+        await unlinkAsync(req.file.path)
+    }
+
 
     const {
         username,
         email,
-        
         number,
         address,
-        password,
-        avatar_url
-        
     } = req.body
-
+    
     const update = {
         username,
         email,
         type:req.body.type,
         number,
         address,
-        password,
-        avatar_url
     }
+
+    if(req.file){
+        update.avatar_url=user_avatar
+    }
+    console.log(update);
     try {
-
+        
         const selectedUser = await User.findByIdAndUpdate(selectUserID,
-            update
+            update,{ new: true }
         )
-
+        
         if (!selectedUser) {
             throw new DataNotExistError("User not exist")
         }
 
         return res.status(200).send(selectedUser)
+    } catch (error) {
+        if (error instanceof mongoose.Error.ValidationError) {
+            // Mongoose validation error
+            const validationErrors = {};
+
+            for (const field in error.errors)
+                validationErrors[field] = error.errors[field].message;
+
+            return res.status(400).json({
+                error: 'Validation failed',
+                validationErrors,
+            });
+        } else {
+            res.status(400).json({
+                error: error.name,
+                message: error.message
+            })
+        }
+    }
+}
+
+const updatePassword = async (req, res) => {
+    const { userId } = getUserInfo(res)
+    
+    const selectUserID = userId;
+
+    const {
+        oldpassword, newpassword
+    } = req.body
+
+    try {
+
+        const hashedOldPassword = await hashPassword(oldpassword)
+        const hashedNewPassword = await hashPassword(newpassword)
+
+        /**
+         * 
+         * const uU = User.fOAU({
+         *  _id : selectUserID,
+         * password: 
+         * }, update)
+         */
+        const user = await User.findOne({ _id : new mongoose.Types.ObjectId(selectUserID) });
+        if (!user) {
+            return res.json({
+                error: 'No user found'
+            })
+        }
+
+        const match = await comparePassword(oldpassword, user.password)
+        
+        if (!match){
+            throw new PasswordNotSameError("Password Not Same")
+        }
+        else{
+            const updatedUser = await User.findOneAndUpdate({
+                _id : new mongoose.Types.ObjectId(selectUserID)
+            }, {password:hashedNewPassword})
+            
+            if (!updatedUser) {
+                throw new PasswordNotSameError("Password Not Same")
+            }
+    
+            return res.status(200).send(updatedUser)
+        }
     } catch (error) {
         if (error instanceof mongoose.Error.ValidationError) {
             // Mongoose validation error
@@ -259,5 +332,5 @@ const deleteUser = async (req, res) => {
 }
 
 module.exports = {
-    createUser, listSelectedUser, listUser, updateUser, deleteUser
+    createUser, listSelectedUser, listUser, updateUser, deleteUser, updatePassword
 };

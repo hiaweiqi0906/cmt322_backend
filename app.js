@@ -11,6 +11,8 @@ const appointment = require('./routes/appointment');
 const cases = require('./routes/case');
 const document = require('./routes/document');
 const auth = require('./routes/auth');
+const taskRoutes = require('./routes/task');
+
 const statistic = require('./routes/statistic');
 
 const mongoose = require('mongoose');
@@ -44,6 +46,7 @@ app.use('/api/documents', document);
 app.use('/api/cases', cases);
 app.use('/api/statistics', statistic);
 app.use('/auth', auth);
+app.use('/api/tasks', taskRoutes);
 
 const io = require('socket.io')(server, {
   cors: {

@@ -11,14 +11,11 @@ const appointment = require('./routes/appointment');
 const cases = require('./routes/case');
 const document = require('./routes/document');
 const auth = require('./routes/auth');
-<<<<<<< HEAD
 const taskRoutes = require('./routes/task');
 
-=======
 const statistic = require('./routes/statistic');
 let messageBatch = {};
 let collectedUserInfo = {};
->>>>>>> a6bb7a2e794f7f5bc68a28be1448cfe87fbb2175
 const mongoose = require('mongoose');
 const Message = require('./models/message')
 const User = require('./models/user')
@@ -38,7 +35,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: 'http://localhost',
+  origin: 'http://localhost:3000',
   credentials: true}));
 
 const PORT = process.env.SERVER_PORT || 9000;
@@ -52,9 +49,7 @@ app.use('/api/documents', document);
 app.use('/api/cases', cases);
 app.use('/api/statistics', statistic);
 app.use('/auth', auth);
-<<<<<<< HEAD
 app.use('/api/tasks', taskRoutes);
-=======
 
 const io = require('socket.io')(server, {
   cors: {
@@ -156,4 +151,3 @@ const writeMessageBatchToDB = () => {
 
 // Set up periodic batch write (adjust the interval as needed)
 setInterval(writeMessageBatchToDB, 5000); // 5000 milliseconds (5 seconds) as an example interval
->>>>>>> a6bb7a2e794f7f5bc68a28be1448cfe87fbb2175

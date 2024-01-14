@@ -11,6 +11,13 @@ class DataNotExistError extends Error {
     }
   }
 
+  class ServerError extends Error {
+    constructor(message) {
+      super(message); 
+      this.name = "ServerError"; 
+    }
+  }
+
   class DoNotHaveAccessError extends Error {
     constructor(message) {
       super(message); 

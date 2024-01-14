@@ -62,7 +62,6 @@ async function uploadFile(authClient, fileToUpload) {
         if (error) {
           return rejected(error);
         }
-        console.log(file);
         resolve(file);
       }
     );

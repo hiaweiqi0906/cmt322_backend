@@ -65,7 +65,6 @@ const loginUser = async (req, res) => {
             })
         }
     } catch (error) {
-        console.log('err occured', error)
         res.json({
             message: "error occurred",
             error: this.error
@@ -74,7 +73,6 @@ const loginUser = async (req, res) => {
 }
 
 const readUser = (req, res) => {
-    console.log("here", res.locals)
 }
 
 module.exports = { test, registerUser, loginUser, readUser }

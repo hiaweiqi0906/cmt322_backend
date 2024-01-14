@@ -12,13 +12,13 @@ const cases = require('./routes/case');
 const document = require('./routes/document');
 const auth = require('./routes/auth');
 const taskRoutes = require('./routes/task');
-
 const statistic = require('./routes/statistic');
 let messageBatch = {};
 let collectedUserInfo = {};
 const mongoose = require('mongoose');
 const Message = require('./models/message')
 const User = require('./models/user')
+const crmRoute = require('./routes/crm');
 
 mongoose.connect(process.env.MONGO_URL, {
   dbName: process.env.MONGO_DBNAME,
@@ -34,9 +34,10 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true}));
+
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+
+
 
 const PORT = process.env.SERVER_PORT || 9000;
 
@@ -49,7 +50,11 @@ app.use('/api/documents', document);
 app.use('/api/cases', cases);
 app.use('/api/statistics', statistic);
 app.use('/auth', auth);
+
+app.use('/api/crm', crmRoute);
+
 app.use('/api/tasks', taskRoutes);
+
 
 const io = require('socket.io')(server, {
   cors: {

@@ -25,8 +25,24 @@ class DataNotExistError extends Error {
     }
   }
 
+  class PasswordNotSameError extends Error {
+    constructor(message) {
+      super(message); 
+      this.name = "PasswordNotSameError"; 
+    }
+  }
+
+  class UnauthorizedAccessError extends Error {
+    constructor(message) {
+      super(message); 
+      this.name = "UnauthorizedAccessError"; 
+    }
+  }
+
 module.exports = {
     DataNotExistError,
     UserNotSameError,
-    DoNotHaveAccessError
+    DoNotHaveAccessError,
+    PasswordNotSameError,
+    UnauthorizedAccessError
 };

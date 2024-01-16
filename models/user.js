@@ -5,30 +5,43 @@ const {Schema} = mongoose
 const userSchema = new Schema({
     username: {
         type: String,
-        required: true
+        required: [true, "Username is required"],
     },
-    last_name: {
-        type: String,
-    },
-    first_name: {
-        type: String,
-    },
+
+    // related_case_history: {
+    //     type: [String],
+        
+    // },
+
     email: {
         type: String,
         unique: true,
-        required: true
+        required: [true, "Email is required"],
     },
+
+    number: {
+        type: String,
+        unique: true,
+        required: [true, "Contact Number is required"],
+    },
+
+    address: {
+        type: String,
+        unique: true,
+        required: [true, "Address is required"],
+    },
+    
     password: {
         type: String,
-        required: true
+        required: [true, "Password is required"],
     },
     avatar_url: {
         type: String,
-        required: true
+        
     },
     type: {
         type: String,
-        required: true
+        required: [true, "Type is required"],
     },
 })
 

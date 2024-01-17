@@ -53,44 +53,6 @@ app.use('/auth', auth);
 app.use('/api/crm', crmRoute);
 app.use('/api/tasks', taskRoutes);
 
-app.put('/api/noti/:update/:id', requireAuth, async (req, res) => {
-  const { userId } = getUserInfo(res)
-  const { update, id } = req.params
-  try {
-    const updatedNoti = await Notification.findAndUpdate({
-      "_id": id,
-      "notification_recipient_id_and_status.recipient_id": userId
-    }, {
-      $set: {
-        "notification_recipient_id_and_status.$.status": "read"
-      }
-    })
-
-    console.log(updatedNoti);
-    return res.status(200).send(updatedNoti)
-
-  } catch (error) {
-    if (error instanceof mongoose.Error.ValidationError) {
-      // Mongoose validation error
-      const validationErrors = {};
-
-      for (const field in error.errors)
-        validationErrors[field] = error.errors[field].message;
-
-      return res.status(400).json({
-        error: 'Validation failed',
-        validationErrors,
-      });
-    } else {
-      res.status(400).json({
-        error: error.name,
-        message: error.message
-      })
-    }
-  }
-});
-
-
 const io = require('socket.io')(server, {
   cors: {
     origin: process.env.CLIENT_URL,

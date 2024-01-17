@@ -1,5 +1,6 @@
 const fs = require('fs')
 const getUserInfo = require('../helpers/getUserInfo');
+const saveNotifications = require('../helpers/saveNotification');
 const { DataNotExistError, UserNotSameError, DoNotHaveAccessError } = require('../helpers/exceptions');
 const validator = require('validator');
 const Document = require('../models/document');
@@ -79,10 +80,13 @@ const updateDoc = async (req, res) => {
             update
         )
 
-
         if (!selectedDocument) {
             throw new DataNotExistError("Document not exist")
         }
+        let editedByUserName = await User.findById(new mongoose.Types.ObjectId(userId)).select(['username']);
+        let editedCaseName = await Case.findById(new mongoose.Types.ObjectId(q_caseId)).select(['case_title']);
+        
+        await saveNotifications(`${editedByUserName.username} has edited document in this case: ${editedCaseName.case_title}`, can_be_access_by, "editDocument", `/php/document/view.php?id=${selectedDocument._id}&cid=${editedCaseName._id}`)
 
         return res.status(200).send(selectedDocument)
     } catch (error) {
@@ -122,17 +126,25 @@ const readDoc = async (req, res) => {
                         "userId": userId,
                         "type": type,
                         "action": "view",
-                        "access_date_time": Date.parse(Date.now())
+                        "access_date_time": Date.now()
                     }
                 }
             }, { new: true }
         )
+
+        const uploadUserId = requestedDocument.uploaded_by
+        let uploadedByUserName = await User.findById(new mongoose.Types.ObjectId(uploadUserId)).select(['username', 'avatar_url']);
+
+        const lastAccessUserId = requestedDocument.last_accessed_at[requestedDocument.last_accessed_at.length - 1].userId
+        let lastAccessedByUserName = await User.findById(new mongoose.Types.ObjectId(lastAccessUserId)).select(['username', 'avatar_url']);
+
+        const relatedCaseId = requestedDocument.doc_case_related
+        let relatedCaseName = await Case.findById(new mongoose.Types.ObjectId(relatedCaseId)).select('case_title');
+
         if (!requestedDocument)
             throw new DataNotExistError("Document not exist")
 
-        // update the doc
-
-        return res.status(200).send({ ...requestedDocument._doc, canEdit: requestedDocument.uploaded_by === userId })
+        return res.status(200).send({ ...requestedDocument._doc, canEdit: requestedDocument.uploaded_by === userId, uploadedByUserName, lastAccessedByUserName, relatedCaseName })
     } catch (error) {
         if (error instanceof mongoose.Error.ValidationError) {
             // Mongoose validation error
@@ -158,16 +170,17 @@ const listDoc = async (req, res) => {
     try {
         const allDocument = await Document.find({})
         let updatedCaseDocs = []
-        for(const doc of allDocument){
+        for (const doc of allDocument) {
             const uploadUserId = doc.uploaded_by
-            let uploadedByUserName = await User.findById(new mongoose.Types.ObjectId(uploadUserId)).select('username');
+            let uploadedByUserName = await User.findById(new mongoose.Types.ObjectId(uploadUserId)).select(['username', 'avatar_url']);
 
             const lastAccessUserId = doc.last_accessed_at[doc.last_accessed_at.length - 1].userId
-            let lastAccessedByUserName = await User.findById(new mongoose.Types.ObjectId(lastAccessUserId)).select('username');
+            let lastAccessedByUserName = await User.findById(new mongoose.Types.ObjectId(lastAccessUserId)).select(['username', 'avatar_url']);
+
             const relatedCaseId = doc.doc_case_related
             let relatedCaseName = await Case.findById(new mongoose.Types.ObjectId(relatedCaseId)).select('case_title');
 
-            updatedCaseDocs.push({...doc._doc, uploadedByUserName, lastAccessedByUserName, relatedCaseName})
+            updatedCaseDocs.push({ ...doc._doc, uploadedByUserName, lastAccessedByUserName, relatedCaseName })
         }
 
         if (!allDocument)
@@ -196,7 +209,6 @@ const listDoc = async (req, res) => {
 }
 
 const listDocByCase = async (req, res) => {
-    console.log("here");
     const { caseId } = req.params
     const { userId, type } = getUserInfo(res)
     try {
@@ -207,18 +219,18 @@ const listDocByCase = async (req, res) => {
 
         const caseDocuments = await Document.find(filter)
         let updatedCaseDocs = []
-        for(const doc of caseDocuments){
+        for (const doc of caseDocuments) {
             const uploadUserId = doc.uploaded_by
-            let uploadedByUserName = await User.findById(new mongoose.Types.ObjectId(uploadUserId)).select('username');
+            let uploadedByUserName = await User.findById(new mongoose.Types.ObjectId(uploadUserId)).select(['username', 'avatar_url']);
 
             const lastAccessUserId = doc.last_accessed_at[doc.last_accessed_at.length - 1].userId
-            let lastAccessedByUserName = await User.findById(new mongoose.Types.ObjectId(lastAccessUserId)).select('username');
+            let lastAccessedByUserName = await User.findById(new mongoose.Types.ObjectId(lastAccessUserId)).select(['username', 'avatar_url']);
             const relatedCaseId = doc.doc_case_related
             let relatedCaseName = await Case.findById(new mongoose.Types.ObjectId(relatedCaseId)).select('case_title');
-            updatedCaseDocs.push({...doc._doc, uploadedByUserName, lastAccessedByUserName, relatedCaseName})
+            updatedCaseDocs.push({ ...doc._doc, uploadedByUserName, lastAccessedByUserName, relatedCaseName })
         }
 
-        if (!caseDocuments )
+        if (!caseDocuments)
             throw new DataNotExistError("Document not exist")
         await checkCaseAccess(userId, type, caseId)
 
@@ -246,7 +258,6 @@ const listDocByCase = async (req, res) => {
 
 const createDoc = async (req, res) => {
     const { userId, type } = getUserInfo(res)
-    console.log(req.file);
     const authClient = await googleDrive.authorize()
     const uploadedDoc = await googleDrive.uploadFile(authClient, req.file)
     const cloudinaryUploadedImage = await cloudinary.uploader.upload(req.file.path + ".png");
@@ -265,6 +276,8 @@ const createDoc = async (req, res) => {
         doc_description
     } = req.body
 
+
+
     const doc_link_file = "http://docs.google.com/uc?export=open&id=" + uploadedDoc.data.id
     const doc_link_fileId = uploadedDoc.data.id
     const doc_link_onlineDrive = "https://drive.google.com/file/d/" + uploadedDoc.data.id + "/view?usp=sharing"
@@ -273,7 +286,8 @@ const createDoc = async (req, res) => {
     if (!uploaded_by) {
         uploaded_by = userId
     }
-
+    let uploadedByUserName = await User.findById(new mongoose.Types.ObjectId(uploaded_by)).select(['username']);
+    let relatedCaseName = await Case.findById(new mongoose.Types.ObjectId(doc_case_related)).select('case_title');
     if (!can_be_access_by || can_be_access_by.length === 0) {
         let cases = await Case.findById(new mongoose.Types.ObjectId(doc_case_related)).select('case_member_list');
         can_be_access_by = []
@@ -314,7 +328,8 @@ const createDoc = async (req, res) => {
                 error: 'No document uploaded'
             })
         }
-        if (req_msg_id) {
+        if (req_msg_id && req_msg_id !== "undefined") {
+            console.log(req_msg_id);
             const new_updated_message = await Message.findOneAndUpdate({
                 "message_case_id": doc_case_related,
                 "message_list._id": req_msg_id
@@ -326,6 +341,8 @@ const createDoc = async (req, res) => {
                     }
                 })
         }
+
+        await saveNotifications(`${uploadedByUserName.username} has uploaded new document in this case: ${relatedCaseName.case_title}`, can_be_access_by, "addDocument",  `/php/document/view.php?id=${document._id}&cid=${relatedCaseName._id}`)
 
 
         return res.status(200).send(new_document)
@@ -373,6 +390,14 @@ const deleteDoc = async (req, res) => {
         // TODO: delete file from googledrive
         const authClient = await googleDrive.authorize()
         const deletedDoc = await googleDrive.deleteFile(authClient, deletedDocument.doc_link_fileId)
+        console.log(deletedDocument);
+
+        let deletedByUserName = await User.findById(new mongoose.Types.ObjectId(userId)).select(['username']);
+        console.log(deletedByUserName);
+        let deletedCaseName = await Case.findById(new mongoose.Types.ObjectId(caseId)).select(['case_title']);
+        console.log(deletedCaseName);
+        
+        await saveNotifications(`${deletedByUserName.username} has deleted ${deletedDocument.doc_title} (document) in this case: ${deletedCaseName.case_title}`, deletedDocument.can_be_access_by, "deleteDocument", `/php/case/view.php?cid=${caseId}`)
 
         return res.status(200).send(deletedDocument)
     } catch (error) {

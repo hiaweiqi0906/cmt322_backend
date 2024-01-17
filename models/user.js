@@ -7,12 +7,6 @@ const userSchema = new Schema({
         type: String,
         required: [true, "Username is required"],
     },
-
-    // related_case_history: {
-    //     type: [String],
-        
-    // },
-
     email: {
         type: String,
         unique: true,

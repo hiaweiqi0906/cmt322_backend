@@ -21,8 +21,13 @@ const taskSchema = new mongoose.Schema({
         ref: 'User',
     },
     assignedTo: {
-        type: String,
-        ref: 'User',
+        type: [{
+            userId: {
+                type: String,
+                ref: 'User'
+            },
+            status: String
+        }]
     },
     deadline: {
         type: String,

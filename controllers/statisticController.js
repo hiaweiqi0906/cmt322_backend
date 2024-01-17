@@ -97,17 +97,38 @@ const dashboardStatistic = async (req, res) => {
 
 const getNotifications = async (req, res) => {
     const { userId, type } = getUserInfo(res)
+    const allUpdatedNoti = []
     try {
         const allNotifications = await Notification.find(
             {
                 "notification_recipient_id_and_status.recipient_id": userId,
             }
-        )
+        ).sort( { "notification_sent_date": -1 } )
+
+        allNotifications.forEach((noti, i)=>{
+            let read = false
+            noti._doc.notification_recipient_id_and_status.forEach(stat=>{
+                if(stat.recipient_id === userId && stat.status === "read") 
+                    read = true;
+            })
+            allUpdatedNoti.push({...noti._doc, read})
+        })
+
+        const unreadNoti = allUpdatedNoti.filter((noti)=> {return !noti.read})
+        const readNoti = allUpdatedNoti.filter((noti)=> {return noti.read})
+
+        const updatedNoti = await Notification.updateMany({
+            "notification_recipient_id_and_status.recipient_id": userId
+          }, {
+            $set: {
+              "notification_recipient_id_and_status.$.status": "read"
+            }
+          })
 
         if (!allNotifications)
             throw new DataNotExistError("Notifications not exist")
 
-        return res.status(200).send(allNotifications)
+        return res.status(200).send([...unreadNoti, ...readNoti])
     } catch (error) {
         if (error instanceof mongoose.Error.ValidationError) {
             // Mongoose validation error

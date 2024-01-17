@@ -95,7 +95,6 @@ const loginUser = async (req, res) => {
 }
 
 const readUser = (req, res) => {
-    console.log("here", res.locals)
 }
 
 module.exports = { test, registerUser, loginUser, readUser }

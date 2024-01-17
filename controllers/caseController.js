@@ -71,8 +71,6 @@ const readCaseMessage = async (req, res) => {
     const { userId, type } = getUserInfo(res)
     const caseId = req.params.id
 
-    console.log(caseId);
-
     try {
         await checkCaseAccess(userId, type, caseId)
         const caseMessages = await Message.findOne({"message_case_id": caseId})
@@ -143,10 +141,6 @@ const createCase = async (req, res) => {
         case_title
     } = req.body
 
-    console.log(case_member_list);
-
-
-
     // check user is member of a cases or not
     // const current_cases = await Case.find({ cases_member_list: /john/i }, 'name friends').exec();
 
@@ -154,14 +148,10 @@ const createCase = async (req, res) => {
 
     // else continue
 
-    // TODO: upload doc to cloudinary
-
     try {
         const new_cases = new Case({
             case_member_list, case_title
         });
-
-        console.log(new_cases);
 
         const cases = await new_cases.save();
         if (!cases) {

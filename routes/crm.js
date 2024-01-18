@@ -6,6 +6,7 @@ const {requireAuth} = require('../middlewares/authMiddleware')
 const upload = multer({ dest: 'uploads/' })
 
 router.get('/', requireAuth, crmController.listUser) // get list of users
+router.get('/employee', requireAuth, crmController.listEmployee) // get list of users
 router.get('/:id', requireAuth, crmController.listSelectedUser) // get only selected users
 
 router.post('/', requireAuth, crmController.createUser) // create new user

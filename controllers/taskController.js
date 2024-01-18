@@ -316,7 +316,12 @@ const updateStatus = async (req, res) => {
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
         }
-        await saveNotifications(`${name} has finished task assigned by you: ${task.title}`, [task.assignedBy], "finishedTask", `/php/task`)
+        let notiMsg
+        if(status === "working") notiMsg = "currently working on task assigned by you:"
+        else if(status==="done") notiMsg = "finished task assigned by you:"
+        else  notiMsg = "moved the task assigned by you back to TODO:"
+        
+        await saveNotifications(`${name} ${notiMsg} ${task.title}`, [task.assignedBy], "finishedTask", `/php/task`)
 
         res.status(200).json(task);
     } catch (error) {

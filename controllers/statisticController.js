@@ -1,4 +1,5 @@
 const Case = require('../models/case')
+const Document = require('../models/document')
 const User = require('../models/user')
 const Notification = require('../models/notification')
 const getUserInfo = require('../helpers/getUserInfo');
@@ -10,41 +11,49 @@ const jwt = require('jsonwebtoken');
 const dashboardStatistic = async (req, res) => {
     const { userId, type } = getUserInfo(res)
     try {
-        const allNotifications = await Notifications.find({})
+        const allNotifications = await Notification.find({})
         const allCase = await Case.find({})
-        const allUser = await User.find({})
+        const allDoc = await Document.find({})
+        const allClient = await User.find({type: "client"})
+        const allEmployee = await User.find({ type: {$ne: "client"} })
+        // let openCase=0, closedCase=0, pendingCase=0;
 
-        if (!allNotifications)
-            throw new DataNotExistError("Notifications not exist")
+        // allCase.forEach(c=>{
+        //     console.log(c);
+        // })
 
-        // TODO: Calculate statistics and res.return statistics 
+        const openCase = allCase.filter(x => x.case_status==="Open").length
+        const closedCase = allCase.filter(x => x.case_status==="Closed").length
+        const pendingCase = allCase.filter(x => x.case_status==="Pending").length
+// console.log(allCase);
+        const clientCount = allClient.length
+        const adminCount = allEmployee.filter(x => x.type=="admin").length
+        const partnerCount = allEmployee.filter(x => x.type=="partner").length
+        const associatesCount = allEmployee.filter(x => x.type=="associates").length
+        const paralegalCount = allEmployee.filter(x => x.type=="paralegal").length
+
 
         // dummy statistic data
         const caseStatistic = {
-            "open": 34,
-            "close": 25,
-            "pending": 22
+            "open": openCase,
+            "close": closedCase,
+            "pending": pendingCase
         }
 
         const userStatistic = {
-            "admins": 12,
-            "paralegals": 23,
-            "clients": 43
+            "admins": adminCount,
+            "paralegals": paralegalCount,
+            "clients": clientCount,
+            "partners": partnerCount,
+            "associates": associatesCount
         }
 
         const clientStatistic = {
-            "serviceQuality": [
-                5.0, 4.5, 4.7, 3.6, 4.7, 5.0
-            ],
-            "communication": [
-                5.0, 4.5, 4.7, 3.6, 4.7, 5.0
-            ],
-            "professionalism": [
-                5.0, 4.5, 4.7, 3.6, 4.7, 5.0
-            ],
-            "clientOverallSatisfactoryRating": [
-                5.0, 4.5, 4.7, 3.6, 4.7, 5.0
-            ],
+            "serviceQuality": 4.5,
+            "communication": 4.7,
+            "professionalism": 4.3,
+            "clientOverallSatisfactoryRating": 4.5,
+            "performance": 4.4
         }
 
         const NotificationsStatistic = {
@@ -69,11 +78,10 @@ const dashboardStatistic = async (req, res) => {
                 { "docTitle": "Lawyer intro 1", "uploadedBy": "(P) Mr Cheah", "uploadedAt": "2 hr 30 mins ago..." }, 
                 { "docTitle": "Lawyer intro 1", "uploadedBy": "(P) Mr Cheah", "uploadedAt": "3 hour ago..." }, 
                 { "docTitle": "Lawyer intro 1", "uploadedBy": "(P) Mr Cheah", "uploadedAt": "3 hr 20 mins ago..." }, 
-            
             */
         }
 
-        return res.status(200).send({caseStatistic, userStatistic, clientStatistic, NotificationsStatistic})
+        return res.status(200).send({caseStatistic, userStatistic, clientStatistic})
     } catch (error) {
         if (error instanceof mongoose.Error.ValidationError) {
             // Mongoose validation error

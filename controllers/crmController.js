@@ -108,14 +108,14 @@ const readUser = async (req, res) => {
 const listSelectedUser = async (req, res) => {
     let { id } = req.params
     const { userId, type } = getUserInfo(res)
-    id = id === "self"?userId:id
-    try{
+    id = id === "self" ? userId : id
+    try {
         const selectedUser = await User.findById(new mongoose.Types.ObjectId(id));
         if (!selectedUser)
             throw new DataNotExistError("User does not exist")
 
         return res.status(200).send(selectedUser)
-    }catch (error) {
+    } catch (error) {
         if (error instanceof mongoose.Error.ValidationError) {
             // Mongoose validation error
             const validationErrors = {};
@@ -136,11 +136,38 @@ const listSelectedUser = async (req, res) => {
     }
 }
 
-
-
 const listUser = async (req, res) => {
     try {
-        const allUser = await User.find({})
+        const allUser = await User.find({ type: "client" })
+
+        if (!allUser)
+            throw new DataNotExistError("User does not exist")
+
+        return res.status(200).send(allUser)
+    } catch (error) {
+        if (error instanceof mongoose.Error.ValidationError) {
+            // Mongoose validation error
+            const validationErrors = {};
+
+            for (const field in error.errors)
+                validationErrors[field] = error.errors[field].message;
+
+            return res.status(400).json({
+                error: 'Validation failed',
+                validationErrors,
+            });
+        } else {
+            res.status(400).json({
+                error: error.name,
+                message: error.message
+            })
+        }
+    }
+}
+
+const listEmployee = async (req, res) => {
+    try {
+        const allUser = await User.find({ type: {$ne: "client"} })
 
         if (!allUser)
             throw new DataNotExistError("User does not exist")
@@ -172,9 +199,9 @@ const updateUser = async (req, res) => {
     const { userId, type } = getUserInfo(res)
     id = id === "self" ? userId : id
     let user_avatar;
-    
+
     const selectUserID = type === "admin" ? id : userId;
-    if(req.file){
+    if (req.file) {
         const cloudinaryUploadedImage = await cloudinary.uploader.upload(req.file.path);
         user_avatar = cloudinaryUploadedImage.url;
         await unlinkAsync(req.file.path)
@@ -187,25 +214,25 @@ const updateUser = async (req, res) => {
         number,
         address,
     } = req.body
-    
+
     const update = {
         username,
         email,
-        type:req.body.type,
+        type: req.body.type,
         number,
         address,
     }
 
-    if(req.file){
-        update.avatar_url=user_avatar
+    if (req.file) {
+        update.avatar_url = user_avatar
     }
     console.log(update);
     try {
-        
+
         const selectedUser = await User.findByIdAndUpdate(selectUserID,
-            update,{ new: true }
+            update, { new: true }
         )
-        
+
         if (!selectedUser) {
             throw new DataNotExistError("User not exist")
         }
@@ -234,7 +261,7 @@ const updateUser = async (req, res) => {
 
 const updatePassword = async (req, res) => {
     const { userId } = getUserInfo(res)
-    
+
     const selectUserID = userId;
 
     const {
@@ -253,7 +280,7 @@ const updatePassword = async (req, res) => {
          * password: 
          * }, update)
          */
-        const user = await User.findOne({ _id : new mongoose.Types.ObjectId(selectUserID) });
+        const user = await User.findOne({ _id: new mongoose.Types.ObjectId(selectUserID) });
         if (!user) {
             return res.json({
                 error: 'No user found'
@@ -261,19 +288,19 @@ const updatePassword = async (req, res) => {
         }
 
         const match = await comparePassword(oldpassword, user.password)
-        
-        if (!match){
+
+        if (!match) {
             throw new PasswordNotSameError("Password Not Same")
         }
-        else{
+        else {
             const updatedUser = await User.findOneAndUpdate({
-                _id : new mongoose.Types.ObjectId(selectUserID)
-            }, {password:hashedNewPassword})
-            
+                _id: new mongoose.Types.ObjectId(selectUserID)
+            }, { password: hashedNewPassword })
+
             if (!updatedUser) {
                 throw new PasswordNotSameError("Password Not Same")
             }
-    
+
             return res.status(200).send(updatedUser)
         }
     } catch (error) {
@@ -303,13 +330,13 @@ const deleteUser = async (req, res) => {
 
     const selectUserID = type === "admin" ? id : userId;
 
-    try{
+    try {
 
         const deletedUser = await User.findByIdAndDelete(selectUserID)
         if (!deletedUser)
             throw new DataNotExistError("User does not exist")
 
-    return res.status(200).send(deletedUser)
+        return res.status(200).send(deletedUser)
     } catch (error) {
         if (error instanceof mongoose.Error.ValidationError) {
             // Mongoose validation error
@@ -332,5 +359,5 @@ const deleteUser = async (req, res) => {
 }
 
 module.exports = {
-    createUser, listSelectedUser, listUser, updateUser, deleteUser, updatePassword
+    createUser, listSelectedUser, listUser, updateUser, deleteUser, updatePassword, listEmployee
 };

@@ -12,13 +12,11 @@ const userSchema = new Schema({
         unique: true,
         required: [true, "Email is required"],
     },
-
     number: {
         type: String,
         unique: true,
         required: [true, "Contact Number is required"],
     },
-
     address: {
         type: String,
         unique: true,
@@ -37,6 +35,11 @@ const userSchema = new Schema({
         type: String,
         required: [true, "Type is required"],
     },
+    rating: {
+        type: {
+
+        }
+    }
 })
 
 // Model

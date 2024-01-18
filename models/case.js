@@ -34,6 +34,9 @@ const caseSchema = new Schema({
         type: String,
         required: [true, "Case_title should not be null"],
     },
+    case_status:{
+        type:String
+    }
 })
 
 // Model

@@ -2,134 +2,8 @@ const { DataNotExistError } = require('../helpers/exceptions');
 const getUserInfo = require('../helpers/getUserInfo');
 const Appointment = require('../models/appointment');
 const User = require('../models/user');
+const saveNotifications = require('../helpers/saveNotification');
 
-const appointmentList = [
-  {
-    _id: '1',
-    creator: 'Jie Yi',
-    title: 'Appointment 1',
-    attendees: [
-      {
-        name: 'Bulbasaur',
-        response: 'pending'
-      },
-      {
-        name: 'Charmander',
-        response: 'pending'
-      },
-      {
-        name: 'Pikachu',
-        response: 'declined'
-      }
-    ],
-    location: 'USM',
-    dateStart: '2024-1-1',
-    dateEnd: '2024-1-1',
-    timeStart: '3:30 PM',
-    timeEnd: '4:00 PM',
-    details: 'The appointment 1 is scheduled',
-    status: 'scheduled'
-  },
-  {
-    _id: '2',
-    creator: 'Pikachu',
-    title: 'Appointment 2',
-    attendees: [
-      {
-        name: 'Suikun',
-        response: 'accepted'
-      },
-      {
-        name: 'Bulbasaur',
-        response: 'declined'
-      }
-    ],
-    location: 'UTM',
-    dateStart: '2023-12-28',
-    dateEnd: '2023-12-28',
-    timeStart: '',
-    timeEnd: '',
-    details: 'The appointment 2 is scheduled',
-    status: 'scheduled'
-  },
-  {
-    _id: '3',
-    creator: 'John',
-    title: 'Appointment 3',
-    attendees: [
-      {
-        name: 'Johnson',
-        response: 'pending'
-      }
-    ],
-    location: 'UKM',
-    dateStart: '2023-12-29',
-    dateEnd: '2023-12-29',
-    timeStart: '8:00 AM',
-    timeEnd: '9:00 AM',
-    details: 'The appointment 3 is scheduled',
-    status: 'cancelled'
-  },
-  {
-    _id: '4',
-    creator: 'Charmeleon',
-    title: 'Appointment 4',
-    attendees: [
-      {
-        name: 'Pikachu',
-        response: 'pending'
-      }
-    ],
-    location: 'UKM',
-    dateStart: '2023-12-29',
-    dateEnd: '2023-12-29',
-    timeStart: '8:00 AM',
-    timeEnd: '9:00 AM',
-    details: 'The appointment 4 is scheduled',
-    status: 'scheduled'
-  },
-  {
-    _id: '5',
-    creator: 'Raikou',
-    title: 'Appointment 5',
-    attendees: [
-      {
-        name: 'Pikachu',
-        response: 'pending'
-      }
-    ],
-    location: 'UKM',
-    dateStart: '2023-12-29',
-    dateEnd: '2023-12-29',
-    timeStart: '8:00 AM',
-    timeEnd: '9:00 AM',
-    details: 'The appointment 5 is scheduled',
-    status: 'scheduled'
-  },
-  {
-    _id: '6',
-    creator: 'Entei',
-    title: 'Appointment 6',
-    attendees: [
-      {
-        name: 'Pikachu',
-        response: 'accepted'
-      }
-    ],
-    location: 'UKM',
-    dateStart: '2024-1-4',
-    dateEnd: '2024-1-4',
-    timeStart: '9:00 AM',
-    timeEnd: '10:00 AM',
-    details: 'The appointment 6 is scheduled',
-    status: 'scheduled'
-  },
-
-]
-
-const attendees = ['Bulbasaur', 'Ivysaur', 'Venusaur', 'Charmander', 'Charmeleon', 'Pikachu', 'Raikou', 'Suikun', 'Entei']
-// let role = 'admin';
-// let username = 'Pikachu';
 
 // Filter the appointments based on username
 const filterAppointments = (allAppointments, username) => {
@@ -247,6 +121,124 @@ const retrieveAllUsersExceptCurrentUser = async (excludeName) => {
 }
 
 
+// To get the list of attendee from an appointment
+const getListOfAttendees = (appointment) => {
+  return appointment.attendees.map(attendee => attendee.name);
+}
+
+
+// To get the _id for each user from the username list
+const getListOfUserID = async (usernameList) => {
+  const resultsArray = [];
+
+  // Use Promise.all to wait for all queries to complete
+  await Promise.all(usernameList.map(async (username) => {
+    try {
+      const result = await User.findOne({ username }, '_id');
+      
+      if (result) {
+        resultsArray.push(result._id);
+      } else {
+        console.log(`No matching document found for username: ${username}`);
+      }
+    } catch (error) {
+      console.error(`Error querying for username ${username}:`, error);
+    }
+  }));
+
+  return resultsArray;
+}
+
+
+// To get the appointment title and time used for part of message
+const titleTimeMessage = (appointment) => {
+  let time, sameDay, titleAndTime;
+
+  // To check it has start time and end time
+  if(appointment.timeStart === '' && appointment.timeEnd === '') {
+    time = false;
+  }
+  else{
+    time = true;
+  }
+
+  // To check it is same day or not
+  if(appointment.dateStart === appointment.dateEnd){
+    sameDay = true;
+  }
+  else{
+    sameDay = false;
+  }
+
+  // To give the title, date and time (part of message)
+  if(time){
+    if(sameDay){
+      titleAndTime = `${appointment.title} (${appointment.dateStart} ${appointment.timeStart} to ${appointment.timeEnd})`;
+    }
+    else{
+      titleAndTime = `${appointment.title} (${appointment.dateStart} ${appointment.timeStart} to ${appointment.dateEnd} ${appointment.timeEnd})`;
+    }
+    
+  }
+  else{
+    if(sameDay){
+      titleAndTime =  `${appointment.title} (${appointment.dateStart})`;
+    }
+    else{
+      titleAndTime = `${appointment.title} (${appointment.dateStart} to ${appointment.dateEnd})`;
+    }
+  }
+
+  return titleAndTime;
+}
+
+
+// To generate message when creator do action to an appointment
+const generateMessage = (appointment, messageType) => {
+  
+  const titleAndTime = titleTimeMessage(appointment);
+
+  switch (messageType) {
+    case "newAppointment":
+      return `${appointment.creator} has sent a new appointment invitation to you: ${titleAndTime}`;
+        
+    case "updateAppointment":
+      return `${appointment.creator} has updated the appointment: ${titleAndTime}`;
+    
+    case "removeAttendees":
+      return `${appointment.creator} has removed you from the appointment: ${titleAndTime}`;
+    
+    case "cancelAppointment":
+      return `${appointment.creator} has cancelled the appointment: ${titleAndTime}`;
+    
+    default:
+      return "Wrong Appointment Message. Please report to administrator";
+  }
+}
+
+
+// To send notification for updated appointment
+const notificationForUpdateAppointment = async (appointment, commonAttendees, attendeesOnlyInOldList, attendeesOnlyInNewList) => {
+  if(commonAttendees.length > 0){
+    const attendeeListID = await getListOfUserID(commonAttendees);
+    const message = generateMessage(appointment, "updateAppointment");
+    await saveNotifications(message, attendeeListID, "updateAppointment", `/php/appointment`);
+  }
+
+  if(attendeesOnlyInOldList.length > 0){
+    const attendeeListID = await getListOfUserID(attendeesOnlyInOldList);
+    const message = generateMessage(appointment, "removeAttendees");
+    await saveNotifications(message, attendeeListID, "removeAttendees", `/php/appointment`);
+  }
+
+  if(attendeesOnlyInNewList.length > 0){
+    const attendeeListID = await getListOfUserID(attendeesOnlyInNewList);
+    const message = generateMessage(appointment, "newAppointment");
+    await saveNotifications(message, attendeeListID, "newAppointment", `/php/appointment`);
+  }
+}
+
+
 // Check the user is admin? return the response
 const checkUserType = (req, res) => {
   const { type } = getUserInfo(res);    // Get the user type from cookies token
@@ -339,6 +331,12 @@ const createAppointment = async (req, res) => {
       isAdmin = false;                   // If is normal user, send his/her own appointments only
       appointments = filterAppointments(allAppointments, name);   // Filter all the appointments
     }
+
+    // To get the user id and send notification about new appointment invitation
+    const attendeeList = getListOfAttendees(gotAppointment);
+    const attendeeListID = await getListOfUserID(attendeeList);
+    const message = generateMessage(gotAppointment, "newAppointment");
+    await saveNotifications(message, attendeeListID, "newAppointment", `/php/appointment`);
   
     return res.json({                    // Send the response with updated data
       username: name,
@@ -386,6 +384,9 @@ const updateAppointment = async (req, res) => {
     const updatedAppointment = req.body;      // Get the updated appointment
     const { name, type } = getUserInfo(res);  // Get the user's name and type
     let isAdmin, appointments;
+
+    // To get the old appointment data
+    const oldAppointment = await Appointment.findById(id);
   
     await updateAppointmentById(id, updatedAppointment);      // Update the appointment in database
 
@@ -400,6 +401,22 @@ const updateAppointment = async (req, res) => {
       isAdmin = false;                  // If is normal user, send his/her own appointments only
       appointments = filterAppointments(allAppointments, name);   // Filter all the appointments
     }
+
+    // To get the old attendee list and new attendee list
+    const oldAttendeeList = getListOfAttendees(oldAppointment);
+    const newAttendeeList = getListOfAttendees(updatedAppointment);
+
+    // Array containing names present in both lists
+    const commonAttendees = oldAttendeeList.filter(name => newAttendeeList.includes(name));
+
+    // Array containing names present in the old list but not in the new list
+    const attendeesOnlyInOldList = oldAttendeeList.filter(name => !newAttendeeList.includes(name));
+
+    // Array containing names present in the new list but not in the old list
+    const attendeesOnlyInNewList = newAttendeeList.filter(name => !oldAttendeeList.includes(name));
+
+    // Send the notification for updated appointment
+    await notificationForUpdateAppointment(updatedAppointment, commonAttendees, attendeesOnlyInOldList, attendeesOnlyInNewList);
   
     return res.json({                          // Send the response with updated data
       username: name,
@@ -425,6 +442,9 @@ const cancelAppointment = async (req, res) => {
     const newStatus = 'cancelled';            // Replace with the new status
     const { name, type } = getUserInfo(res);  // Get the user's name and type
     let isAdmin, appointments;
+
+    // To get the cancelled appointment data
+    const cancelAppointment = await Appointment.findById(id);
   
     await updateAppointmentStatusById(id, newStatus);   // Update appointment status
 
@@ -438,6 +458,12 @@ const cancelAppointment = async (req, res) => {
       isAdmin = false;                  // If is normal user, send his/her own appointments only
       appointments = filterAppointments(allAppointments, name);   // Filter all the appointments
     }
+
+    // To get the user id and send notification for cancelled appointment
+    const attendeeList = getListOfAttendees(cancelAppointment);
+    const attendeeListID = await getListOfUserID(attendeeList);
+    const message = generateMessage(cancelAppointment, "cancelAppointment");
+    await saveNotifications(message, attendeeListID, "cancelAppointment", `/php/appointment`);
   
     return res.json({                   // Send the response with updated data
       username: name,
@@ -463,6 +489,9 @@ const updateUserResponse = async (req, res) => {
     const { name, type } = getUserInfo(res);  // Get the user's name and type
     const userResponse = req.body;            // Get the user response
     let isAdmin, appointments;
+
+    // To get the responded appointment data
+    const respondedAppointment = await Appointment.findById(id);
   
     await updateAttendeeResponse(id, name, userResponse.response);  // Update the attendee response
 
@@ -476,6 +505,20 @@ const updateUserResponse = async (req, res) => {
       isAdmin = false;                  // If is normal user, send his/her own appointments only
       appointments = filterAppointments(allAppointments, name);   // Filter all the appointments !!!
     }
+
+    // To get the creator id and send notification for appointment response
+    let creatorID = await getListOfUserID([respondedAppointment.creator]);
+    let titleAndTime = titleTimeMessage(respondedAppointment);
+
+    if(userResponse.response === "accepted"){
+      const message = `${name} has accepted the appointment: ${titleAndTime}`;
+      await saveNotifications(message, creatorID, "acceptAppointment", `/php/appointment`);
+    }
+    else{
+      const message = `${name} has declined the appointment: ${titleAndTime}`;
+      await saveNotifications(message, creatorID, "declineAppointment", `/php/appointment`);
+    }
+    
   
     res.json({                          // Send the response with updated data
       username: name,

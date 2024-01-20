@@ -9,6 +9,34 @@ const validateArrayLength = (value) => {
 }
 // Schema
 const caseSchema = new Schema({
+    case_title: {
+        type: String,
+        required: [true, "Case_title should not be null"],
+    },
+    case_created_by: {
+        type: String,
+        required: [true, "Case_created_by should not be null"],
+    },
+    case_description: {
+        type: String,
+        required: [true, "Case_description should not be null"],
+    },
+    case_type: {
+        type: String,
+        required: [true, "Case_type should not be null"],
+    },
+    case_status: {
+        type: String,
+        required: [true, "Case_status should not be null"],
+    },
+    case_priority: {
+        type: String,
+        required: [true, "Case_priority should not be null"],
+    },
+    case_total_billed_hour: {
+        type: Number,
+        required: [true, "Case_total_billed_hour should not be null"],
+    },
     case_member_list: {
         type: [
             {
@@ -29,13 +57,6 @@ const caseSchema = new Schema({
             validator: validateArrayLength,
             message: "Case_member_list should not be empty array"
         }
-    },
-    case_title: {
-        type: String,
-        required: [true, "Case_title should not be null"],
-    },
-    case_status:{
-        type:String
     }
 })
 

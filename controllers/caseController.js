@@ -217,7 +217,7 @@ const readCase = async (req, res) => {
         if (type === "admin" || type === "partner")
             cases = await Case.findById(new mongoose.Types.ObjectId(caseId))
         else
-            cases = await Case.find(
+            cases = await Case.findOne(
                 {
                     "case_member_list.case_member_id": userId,
                     "case_member_list.case_member_type": type,

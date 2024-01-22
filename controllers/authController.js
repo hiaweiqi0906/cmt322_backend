@@ -76,7 +76,7 @@ const loginUser = async (req, res) => {
             }, process.env.JWT_SECRET, {}, (err, token) => {
                 if (err) throw err;
                 res.cookie('token', token, {
-                    secure: process.env.NODE_ENV !== "development",
+                    secure: false,//process.env.NODE_ENV !== "development",
                     httpOnly: true,
                     maxAge: 2 * 60 * 60 * 1000,
                 })
